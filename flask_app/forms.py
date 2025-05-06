@@ -3,7 +3,7 @@ from flask_login import current_user
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from werkzeug.utils import secure_filename
-from wtforms import StringField, SubmitField, TextAreaField, PasswordField
+from wtforms import StringField, SubmitField, TextAreaField, PasswordField, HiddenField
 from wtforms.validators import (
     InputRequired,
     Length,
@@ -16,64 +16,63 @@ from wtforms.validators import (
 from .models import User
 
 
-class SearchForm(FlaskForm):
-    search_query = StringField(
-        "Query", validators=[InputRequired(), Length(min=1, max=100)]
+class RegistrationForm(FlaskForm):
+    username = StringField(
+        "Username",
+        validators=[InputRequired(), Length(min=1, max=40)]
+    )
+    email = StringField(
+        "Email",
+        validators=[InputRequired(), Email()]
+    )
+    password = StringField(
+        "Password",
+        validators=[InputRequired(), Length(min=6)]
+    )
+    confirm_password = StringField(
+        "Confirm Password",
+        validators=[InputRequired(), EqualTo("password")]
+    )
+    submit = SubmitField("Sign Up")
+
+    def validate_username(self, field):
+        if User.objects(username=field.data).first():
+            raise ValidationError("That username is already taken.")
+
+    def validate_email(self, field):
+        if User.objects(email=field.data).first():
+            raise ValidationError("That email is already registered.")
+
+
+class LoginForm(FlaskForm):
+    username = StringField(
+        "Username",
+        validators=[InputRequired(), Length(min=1, max=40)]
+    )
+    password = StringField(
+        "Password",
+        validators=[InputRequired()]
+    )
+    submit = SubmitField("Log In")
+
+
+class StockSearchForm(FlaskForm):
+    ticker = StringField(
+        "Ticker Symbol",
+        validators=[InputRequired(), Length(min=1, max=10)]
     )
     submit = SubmitField("Search")
 
 
-class stockWatchForm(FlaskForm):
-    submit = SubmitField("Watch Stock")
+class AddToWatchlistForm(FlaskForm):
+    ticker = HiddenField(validators=[InputRequired(), Length(min=1, max=10)])
+    submit = SubmitField("Add to Watchlist")
 
 
-class RegistrationForm(FlaskForm):
-    username = StringField(
-        "Username", validators=[InputRequired(), Length(min=1, max=40)]
-    )
-    email = StringField("Email", validators=[InputRequired(), Email()])
-    password = PasswordField("Password", validators=[InputRequired()])
-    confirm_password = PasswordField(
-        "Confirm Password", validators=[InputRequired(), EqualTo("password")]
-    )
-    submit = SubmitField("Sign Up")
+class RemoveFromWatchlistForm(FlaskForm):
+    ticker = HiddenField(validators=[InputRequired(), Length(min=1, max=10)])
+    submit = SubmitField("Remove")
 
-    def validate_username(self, username):
-        user = User.objects(username=username.data).first()
-        if user is not None:
-            raise ValidationError("Username is taken")
-
-    def validate_email(self, email):
-        user = User.objects(email=email.data).first()
-        if user is not None:
-            raise ValidationError("Email is taken")
-
-
-# TODO: implement fields
-class LoginForm(FlaskForm):
-    username = StringField("Username", validators=[InputRequired()])
-    password = PasswordField("Password", validators=[InputRequired()])
-    submit = SubmitField("Login")
-
-
-# TODO: implement
-class UpdateUsernameForm(FlaskForm):
-    username = StringField("Username", validators=[InputRequired(), Length(min=1, max=40)])
-    submit_username = SubmitField("Update")
-
-    # TODO: implement
-    def validate_username(self, username):
-        if username.data == current_user.username:
-            raise ValidationError("Username is taken")
-        
-        user = User.objects(username=username.data).first()
-
-        if user:
-            raise ValidationError("Username is taken")
-        
-
-# TODO: implement
 class UpdateProfilePicForm(FlaskForm):
     picture = FileField("Profile Picture", validators=[FileRequired(), FileAllowed(["jpg", "png"], "File does not have an approved extension: jpg, png")])
     submit_picture = SubmitField("Update")
-    
