@@ -1,0 +1,37 @@
+{# flask_app/templates/stocks/watchlist.html #}
+{% extends "base.html" %}
+
+{% block title %}My Watchlist{% endblock %}
+
+{% block content %}
+  <h1>My Watchlist</h1>
+
+  {% if watchlist %}
+    <table class="table-auto w-full">
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th>Current Price</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in watchlist %}
+          <tr>
+            <td>{{ item.ticker }}</td>
+            <td>${{ item.current_price }}</td>
+            <td>
+              <form method="POST" action="{{ url_for('stocks.remove') }}">
+                {{ remove_form.csrf_token }}
+                {{ remove_form.ticker(value=item.ticker) }}
+                {{ remove_form.submit(class="btn btn-sm btn-red") }}
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>Your watchlist is empty. <a href="{{ url_for('stocks.search') }}">Search for stocks</a> to add.</p>
+  {% endif %}
+{% endblock %}
